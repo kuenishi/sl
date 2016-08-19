@@ -1,0 +1,9 @@
+[package]
+name = "sl"
+version = "0.1.0"
+authors = ["UENISHI Kota <kuenishi@gmail.com>"]
+build = "build.rs"
+
+[dependencies]
+getopts = "0.2"
+ncurses = "5.80.0"
