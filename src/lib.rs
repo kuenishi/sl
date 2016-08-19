@@ -50,6 +50,39 @@ fn print_line_left(y : i32, x : i32, width : usize, line : &'static str) {
     ncurses::printw(" ");
 }
 
+// x % y
+fn mymod(x : u32, y : u32) -> u32 {
+    let mut a = x;
+    while a >= y {
+        a -= y;
+    }
+    a
+}
+
+fn choose_wheel(x : u32, h : u32) -> &'static str {
+    match (mymod(x as u32, D51PATTERNS), h) {
+        (0, 0) => D51WHL11,
+        (0, 1) => D51WHL12,
+        (0, 2) => D51WHL13,
+        (1, 0) => D51WHL21,
+        (1, 1) => D51WHL22,
+        (1, 2) => D51WHL23,
+        (2, 0) => D51WHL31,
+        (2, 1) => D51WHL32,
+        (2, 2) => D51WHL33,
+        (3, 0) => D51WHL41,
+        (3, 1) => D51WHL42,
+        (3, 2) => D51WHL43,
+        (4, 0) => D51WHL51,
+        (4, 1) => D51WHL52,
+        (4, 2) => D51WHL53,
+        (5, 0) => D51WHL61,
+        (5, 1) => D51WHL62,
+        (5, 2) => D51WHL63,
+        _ => D51DEL
+    }
+}
+
 fn print_line_right(y : i32, width : usize, line : &'static str) {
     let (_, s) = line.split_at(width);
     ncurses::mvaddch(y, 0, ' ' as u64);
@@ -59,7 +92,7 @@ fn print_line_right(y : i32, width : usize, line : &'static str) {
     }
 }
 
-pub fn run() {
+pub fn setup() {
     ncurses::initscr();
     ncurses::raw();
     ncurses::noecho();
@@ -67,25 +100,29 @@ pub fn run() {
     ncurses::nodelay(ncurses::stdscr, true);
     ncurses::leaveok(ncurses::stdscr, true);
     ncurses::scrollok(ncurses::stdscr, false);
+}
+
+pub fn run() {
     let mut max_x = 0;
     let mut max_y = 0;
     ncurses::getmaxyx(ncurses::stdscr, &mut max_y, &mut max_x);
     ncurses::refresh();
 
     let center = max_y / 2;
-    
-    for x in 1..max_x {
-        let width = std::cmp::min(D51LENGTH, x as u32) - 1;
-        print_line_left(center - 5, max_x - x as i32, width as usize, D51STR1);
-        print_line_left(center - 4, max_x - x as i32, width as usize, D51STR2);
-        print_line_left(center - 3, max_x - x as i32, width as usize, D51STR3);
-        print_line_left(center - 2, max_x - x as i32, width as usize, D51STR4);
-        print_line_left(center - 1, max_x - x as i32, width as usize, D51STR5);
-        print_line_left(center, max_x - x as i32, width as usize, D51STR6);
-        print_line_left(center + 1, max_x - x as i32, width as usize, D51STR7); 
-        print_line_left(center + 2, max_x - x as i32, width as usize, D51WHL11);        
-        print_line_left(center + 3, max_x - x as i32, width as usize, D51WHL12);        
-        print_line_left(center + 4, max_x - x as i32, width as usize, D51WHL13);        
+
+    for i in 1..max_x {
+        let width = std::cmp::min(D51LENGTH, i as u32) - 1;
+        let x : u32 = (max_x - i) as u32;
+        print_line_left(center - 5, x as i32, width as usize, D51STR1);
+        print_line_left(center - 4, x as i32, width as usize, D51STR2);
+        print_line_left(center - 3, x as i32, width as usize, D51STR3);
+        print_line_left(center - 2, x as i32, width as usize, D51STR4);
+        print_line_left(center - 1, x as i32, width as usize, D51STR5);
+        print_line_left(center, x as i32, width as usize, D51STR6);
+        print_line_left(center + 1, x as i32, width as usize, D51STR7);
+        print_line_left(center + 2, x as i32, width as usize, choose_wheel(x, 0));
+        print_line_left(center + 3, x as i32, width as usize, choose_wheel(x, 1));
+        print_line_left(center + 4, x as i32, width as usize, choose_wheel(x, 2));
         ncurses::refresh();
         thread::sleep(time::Duration::from_millis(40));
     }
@@ -98,20 +135,16 @@ pub fn run() {
         print_line_right(center - 1, width as usize, D51STR5);
         print_line_right(center + 0, width as usize, D51STR6);
         print_line_right(center + 1, width as usize, D51STR7);
-        print_line_right(center + 2, width as usize, D51WHL11);
-        print_line_right(center + 3, width as usize, D51WHL12);
-        print_line_right(center + 4, width as usize, D51WHL13);
+        let w = (D51LENGTH - x) as u32;
+        print_line_right(center + 2, width as usize, choose_wheel(w, 0));
+        print_line_right(center + 3, width as usize, choose_wheel(w, 1));
+        print_line_right(center + 4, width as usize, choose_wheel(w, 2));
         ncurses::refresh();
         thread::sleep(time::Duration::from_millis(40));
     }
-    ncurses::refresh();
-    //    ncurses::getch();
-    ncurses::endwin();
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-    }
+pub fn teardown() {
+    //    ncurses::getch();
+    ncurses::endwin();
 }
