@@ -6,7 +6,7 @@ use std::{thread, time};
 
 pub const D51HIGHT : u32 = 10;
 pub const D51FUNNEL : u32 = 7;
-pub const D51LENGTH : u32 = 54;
+pub const D51LENGTH : u32 = 84;
 pub const D51PATTERNS : u32 = 6;
 
 pub const D51STR1 : &'static str = "      ====        ________                ___________ ";
@@ -43,11 +43,58 @@ pub const D51WHL63 : &'static str = "  \\_/      \\_O=====O=====O=====O/      \\
 
 pub const D51DEL  : &'static str = "                                                      ";
 
-fn print_line_left(y : i32, x : i32, width : usize, line : &'static str) {
+pub const  COAL01 : &'static str = "                              ";
+pub const  COAL02 : &'static str = "                              ";
+pub const  COAL03 : &'static str = "    _________________         ";
+pub const  COAL04 : &'static str = "   _|                \\_____A  ";
+pub const  COAL05 : &'static str = " =|                        |  ";
+pub const  COAL06 : &'static str = " -|                        |  ";
+pub const  COAL07 : &'static str = "__|________________________|_ ";
+pub const  COAL08 : &'static str = "|__________________________|_ ";
+pub const  COAL09 : &'static str = "   |_D__D__D_|  |_D__D__D_|   ";
+pub const  COAL10 : &'static str = "    \\_/   \\_/    \\_/   \\_/    ";
+
+pub const  COALDEL : &'static str = "                              ";
+
+fn smokes(y : i32, x : i32) {
+    smoke(y, x, 0);
+    smoke(y - 2, x + 2, 1);
+    smoke(y - 3, x + 4, 2);
+    smoke(y - 4, x + 6, 3);
+    for i in 4..15 {
+        smoke(y - 5, x + 4 + i, i as usize)
+    }
+}
+
+fn smoke(y : i32, x : i32, n : usize) {
+    let smokes : [[&'static str; 16]; 2] =
+        [["(   )", "(    )", "(    )", "(   )", "(  )",
+         "(  )" , "( )"   , "( )"   , "()"   , "()"  ,
+         "O"    , "O"     , "O"     , "O"    , "O"   ,
+          " "],
+         ["(@@@)", "(@@@@)", "(@@@@)", "(@@@)", "(@@)",
+          "(@@)" , "(@)"   , "(@)"   , "@@"   , "@@"  ,
+          "@"    , "@"     , "@"     , "@"    , "@"   ,
+          " "]];
+    let eraser : [&'static str; 16] =
+        ["     ", "      ", "      ", "     ", "    ",
+         "    " , "   "   , "   "   , "  "   , "  "  ,
+         " "    , " "     , " "     , " "    , " "   ,
+         " " ];
+    let a = mymod(n as u32, 16) as usize;
+    if mymod(x as u32, 4) == 0 {
+        if n < 4 {
+            ncurses::mvaddstr(y, x+4, eraser[a]);
+        }
+        let b = mymod((x / 8) as u32, 2);
+        ncurses::mvaddstr(y, x, smokes[b as usize][a]);
+        //3 => ncurses::printw(eraser[a]),
+    };
+}
+
+fn print_line_left(y : i32, x : i32, width : usize, line : &str) {
     let (s, _) = line.split_at(width);
-    ncurses::mvaddch(y, x, ' ' as u64);
-    ncurses::printw(s);
-    ncurses::printw(" ");
+    ncurses::mvaddstr(y, x, s);
 }
 
 // x % y
@@ -83,10 +130,26 @@ fn choose_wheel(x : u32, h : u32) -> &'static str {
     }
 }
 
-fn print_line_right(y : i32, width : usize, line : &'static str) {
+fn train_line(x : u32, h : u32) -> String {
+    let (former, latter) = match h {
+        0 => (D51STR1, COAL01),
+        1 => (D51STR2, COAL02),
+        2 => (D51STR3, COAL03),
+        3 => (D51STR4, COAL04),
+        4 => (D51STR5, COAL05),
+        5 => (D51STR6, COAL06),
+        6 => (D51STR7, COAL07),
+        7 => (choose_wheel(x, 0), COAL08),
+        8 => (choose_wheel(x, 1), COAL09),
+        9 => (choose_wheel(x, 2), COAL10),
+        _ => (D51DEL, COALDEL)
+    };
+    former.to_string() + latter
+}
+
+fn print_line_right(y : i32, width : usize, line : &str) {
     let (_, s) = line.split_at(width);
-    ncurses::mvaddch(y, 0, ' ' as u64);
-    ncurses::printw(s);
+    ncurses::mvaddstr(y, 0, s);
     for i in (line.len() - width)..(line.len()) {
         ncurses::mvaddch(y, i as i32, ' ' as u64);
     }
@@ -113,32 +176,32 @@ pub fn run() {
     for i in 1..max_x {
         let width = std::cmp::min(D51LENGTH, i as u32) - 1;
         let x : u32 = (max_x - i) as u32;
-        print_line_left(center - 5, x as i32, width as usize, D51STR1);
-        print_line_left(center - 4, x as i32, width as usize, D51STR2);
-        print_line_left(center - 3, x as i32, width as usize, D51STR3);
-        print_line_left(center - 2, x as i32, width as usize, D51STR4);
-        print_line_left(center - 1, x as i32, width as usize, D51STR5);
-        print_line_left(center, x as i32, width as usize, D51STR6);
-        print_line_left(center + 1, x as i32, width as usize, D51STR7);
-        print_line_left(center + 2, x as i32, width as usize, choose_wheel(x, 0));
-        print_line_left(center + 3, x as i32, width as usize, choose_wheel(x, 1));
-        print_line_left(center + 4, x as i32, width as usize, choose_wheel(x, 2));
+        smokes(center - 7, x as i32 + 7);
+        print_line_left(center - 5, x as i32, width as usize, &train_line(x, 0));
+        print_line_left(center - 4, x as i32, width as usize, &train_line(x, 1));
+        print_line_left(center - 3, x as i32, width as usize, &train_line(x, 2));
+        print_line_left(center - 2, x as i32, width as usize, &train_line(x, 3));
+        print_line_left(center - 1, x as i32, width as usize, &train_line(x, 4));
+        print_line_left(center, x as i32, width as usize, &train_line(x, 5));
+        print_line_left(center + 1, x as i32, width as usize, &train_line(x, 6));
+        print_line_left(center + 2, x as i32, width as usize, &train_line(x, 7));
+        print_line_left(center + 3, x as i32, width as usize, &train_line(x, 8));
+        print_line_left(center + 4, x as i32, width as usize, &train_line(x, 9));
         ncurses::refresh();
         thread::sleep(time::Duration::from_millis(40));
     }
     for x in 0..D51LENGTH {
         let width = x;
-        print_line_right(center - 5, width as usize, D51STR1);
-        print_line_right(center - 4, width as usize, D51STR2);
-        print_line_right(center - 3, width as usize, D51STR3);
-        print_line_right(center - 2, width as usize, D51STR4);
-        print_line_right(center - 1, width as usize, D51STR5);
-        print_line_right(center + 0, width as usize, D51STR6);
-        print_line_right(center + 1, width as usize, D51STR7);
-        let w = (D51LENGTH - x) as u32;
-        print_line_right(center + 2, width as usize, choose_wheel(w, 0));
-        print_line_right(center + 3, width as usize, choose_wheel(w, 1));
-        print_line_right(center + 4, width as usize, choose_wheel(w, 2));
+        print_line_right(center - 5, width as usize, &train_line(x, 0));
+        print_line_right(center - 4, width as usize, &train_line(x, 1));
+        print_line_right(center - 3, width as usize, &train_line(x, 2));
+        print_line_right(center - 2, width as usize, &train_line(x, 3));
+        print_line_right(center - 1, width as usize, &train_line(x, 4));
+        print_line_right(center + 0, width as usize, &train_line(x, 5));
+        print_line_right(center + 1, width as usize, &train_line(x, 6));
+        print_line_right(center + 2, width as usize, &train_line(x, 7));
+        print_line_right(center + 3, width as usize, &train_line(x, 8));
+        print_line_right(center + 4, width as usize, &train_line(x, 9));
         ncurses::refresh();
         thread::sleep(time::Duration::from_millis(40));
     }

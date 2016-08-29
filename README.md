@@ -23,7 +23,7 @@ $ sl
 # Current status
 
 - [x] Simple Scroll
-- [ ] Wheels
+- [x] Wheels
 - [ ] Smokes
 - [ ] Long
 - [ ] Help!
